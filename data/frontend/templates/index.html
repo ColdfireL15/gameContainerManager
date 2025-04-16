@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Container Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-center mb-4">Docker Container Monitor</h1>
+        
+        {% if error %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+        {% else %}
+        <div class="main-card">
+            <div class="main-card-header">
+                <h2>Group 1</h2>
+                <div class="containers-count">
+                    <span class="running-count">{{ containers|selectattr('is_running')|list|length }} running</span>
+                    <span class="total-count">{{ containers|length }} total</span>
+                </div>
+            </div>
+            <div class="main-card-body">
+                <div class="containers-grid">
+                    {% for container in containers %}
+                    <div class="container-card">
+                        <div class="container-header">
+                            <h3>{{ container.name }}</h3>
+                        </div>
+                        <div class="container-info">
+                            <div class="container-status">
+                                <span class="status-indicator {% if container.is_running %}status-running{% else %}status-stopped{% endif %}"></span>
+                                <span class="status-text">{{ container.status }}</span>
+                                <span class="uptime">
+                                    {% if container.is_running %}
+                                    <span data-started="{{ container.started_at }}">Uptime: <span class="uptime-value">Calculating...</span></span>
+                                    {% else %}
+                                    <span class="uptime-value">Stopped</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="container-actions">
+                                {% if container.is_running %}
+                                <button class="btn btn-warning" onclick="confirmAction('restart', '{{ container.id }}', '{{ container.name }}')">Redémarrer</button>
+                                <button class="btn btn-danger" onclick="confirmAction('stop', '{{ container.id }}', '{{ container.name }}')">Arrêter</button>
+                                {% else %}
+                                <button class="btn btn-success" onclick="startContainer('{{ container.id }}')">Lancer</button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Modal de confirmation -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary d-flex justify-content-center">
+                    <h5 class="modal-title w-100 text-center" id="confirmModalLabel">Confirmation</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <p id="confirmMessage" class="mb-0"></p>
+                </div>
+                <div class="modal-footer border-secondary justify-content-center">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-primary" id="confirmButton">Confirmer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentAction = '';
+        let currentContainerId = '';
+        const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
+        const confirmMessage = document.getElementById('confirmMessage');
+        const confirmButton = document.getElementById('confirmButton');
+
+        function formatUptime(startedAt) {
+            if (!startedAt) return "0m 0s";
+            
+            const start = new Date(startedAt);
+            const now = new Date();
+            const diff = now - start;
+            
+            const seconds = Math.floor(diff / 1000);
+            const days = Math.floor(seconds / (3600 * 24));
+            const hours = Math.floor((seconds % (3600 * 24)) / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            
+            if (days > 0) {
+                return `${days}j ${hours}h ${minutes}m`;
+            } else if (hours > 0) {
+                return `${hours}h ${minutes}m ${remainingSeconds}s`;
+            } else {
+                return `${minutes}m ${remainingSeconds}s`;
+            }
+        }
+
+        function updateUptimes() {
+            document.querySelectorAll('.uptime [data-started]').forEach(element => {
+                const startedAt = element.dataset.started;
+                if (startedAt) {
+                    element.querySelector('.uptime-value').textContent = formatUptime(startedAt);
+                }
+            });
+        }
+
+        setInterval(updateUptimes, 1000);
+        updateUptimes();
+
+        function confirmAction(action, containerId, containerName) {
+            currentAction = action;
+            currentContainerId = containerId;
+            
+            let message = '';
+            if (action === 'restart') {
+                message = `Êtes-vous sûr de vouloir redémarrer le conteneur "${containerName}" ?`;
+                confirmButton.className = 'btn btn-warning';
+            } else if (action === 'stop') {
+                message = `Êtes-vous sûr de vouloir arrêter le conteneur "${containerName}" ?`;
+                confirmButton.className = 'btn btn-danger';
+            }
+            
+            confirmMessage.textContent = message;
+            confirmModal.show();
+        }
+
+        confirmButton.addEventListener('click', function() {
+            if (currentAction === 'restart') {
+                restartContainer(currentContainerId);
+            } else if (currentAction === 'stop') {
+                stopContainer(currentContainerId);
+            }
+            confirmModal.hide();
+        });
+
+        function restartContainer(containerId) {
+            fetch(`/api/container/${containerId}/restart`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Redémarré avec succès');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erreur lors du redémarrage: ' + error);
+            });
+        }
+
+        function startContainer(containerId) {
+            fetch(`/api/container/${containerId}/start`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Lancé avec succès');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erreur lors du lancement: ' + error);
+            });
+        }
+
+        function stopContainer(containerId) {
+            fetch(`/api/container/${containerId}/stop`, {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('Arrêté avec succès');
+                    location.reload();
+                } else {
+                    alert('Erreur: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Erreur lors de l\'arrêt: ' + error);
+            });
+        }
+    </script>
+</body>
+</html> 
