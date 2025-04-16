@@ -24,6 +24,11 @@
                     <h2 class="mb-0">{{ group_name }}</h2>
                     <div class="d-flex align-items-center">
                         <div class="containers-count me-3">
+                            <div class="group-actions me-3">
+                                <button class="btn btn-sm btn-success me-1" onclick="startAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Lancer tout"><i class="bi bi-play-fill"></i></button>
+                                <button class="btn btn-sm btn-warning me-1" onclick="restartAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Redémarrer tout"><i class="bi bi-arrow-repeat text-white"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="stopAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Arrêter tout"><i class="bi bi-stop-fill"></i></button>
+                            </div>
                             <span class="running-count">{{ group_containers|selectattr('is_running')|list|length }} running</span>
                             <span class="total-count">{{ group_containers|length }} total</span>
                         </div>
@@ -208,6 +213,45 @@
             .catch(error => {
                 alert('Erreur lors de l\'arrêt: ' + error);
             });
+        }
+
+        function startAllContainers(groupName, event) {
+            event.stopPropagation();
+            if (confirm(`Êtes-vous sûr de vouloir lancer tous les conteneurs du groupe "${groupName}" ?`)) {
+                fetch(`/api/group/${groupName}/start`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(() => {
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        function restartAllContainers(groupName, event) {
+            event.stopPropagation();
+            if (confirm(`Êtes-vous sûr de vouloir redémarrer tous les conteneurs du groupe "${groupName}" ?`)) {
+                fetch(`/api/group/${groupName}/restart`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(() => {
+                    window.location.href = '/';
+                });
+            }
+        }
+
+        function stopAllContainers(groupName, event) {
+            event.stopPropagation();
+            if (confirm(`Êtes-vous sûr de vouloir arrêter tous les conteneurs du groupe "${groupName}" ?`)) {
+                fetch(`/api/group/${groupName}/stop`, {
+                    method: 'POST'
+                })
+                .then(response => response.json())
+                .then(() => {
+                    window.location.href = '/';
+                });
+            }
         }
     </script>
 </body>

@@ -88,5 +88,85 @@ def start_container(container_id):
             'message': str(e)
         }), 500
 
+@app.route('/api/group/<group_name>/start', methods=['POST'])
+def start_group(group_name):
+    try:
+        containers = client.containers.list(
+            all=True,
+            filters={
+                "label": [
+                    "docker-monitor.enable=true",
+                    f"docker-monitor.group={group_name}"
+                ]
+            }
+        )
+        
+        for container in containers:
+            if container.status != 'running':
+                container.start()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'All containers in group {group_name} started successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/group/<group_name>/restart', methods=['POST'])
+def restart_group(group_name):
+    try:
+        containers = client.containers.list(
+            all=True,
+            filters={
+                "label": [
+                    "docker-monitor.enable=true",
+                    f"docker-monitor.group={group_name}"
+                ]
+            }
+        )
+        
+        for container in containers:
+            container.restart()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'All containers in group {group_name} restarted successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/group/<group_name>/stop', methods=['POST'])
+def stop_group(group_name):
+    try:
+        containers = client.containers.list(
+            all=True,
+            filters={
+                "label": [
+                    "docker-monitor.enable=true",
+                    f"docker-monitor.group={group_name}"
+                ]
+            }
+        )
+        
+        for container in containers:
+            if container.status == 'running':
+                container.stop()
+        
+        return jsonify({
+            'status': 'success',
+            'message': f'All containers in group {group_name} stopped successfully'
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5001) 

@@ -42,5 +42,29 @@ def start_container(container_id):
     except Exception as e:
         return {'status': 'error', 'message': str(e)}, 500
 
+@app.route('/api/group/<group_name>/start', methods=['POST'])
+def start_group(group_name):
+    try:
+        response = requests.post(f"{BACKEND_URL}/api/group/{group_name}/start")
+        return response.json()
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
+@app.route('/api/group/<group_name>/restart', methods=['POST'])
+def restart_group(group_name):
+    try:
+        response = requests.post(f"{BACKEND_URL}/api/group/{group_name}/restart")
+        return response.json()
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
+@app.route('/api/group/<group_name>/stop', methods=['POST'])
+def stop_group(group_name):
+    try:
+        response = requests.post(f"{BACKEND_URL}/api/group/{group_name}/stop")
+        return response.json()
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 
