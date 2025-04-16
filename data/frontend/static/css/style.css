@@ -196,6 +196,21 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.main-card-header:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+
+.chevron-icon {
+    transition: transform 0.3s ease;
+    transform: rotate(-90deg);
+}
+
+[data-bs-toggle="collapse"]:not(.collapsed) .chevron-icon {
+    transform: rotate(0deg);
 }
 
 .main-card-header h2 {

@@ -18,6 +18,11 @@ def get_containers():
         for container in containers:
             container_status = container.status
             started_at = container.attrs['State']['StartedAt'] if container_status == 'running' else None
+
+            if container.labels.get('docker-monitor.group'):
+                label = container.labels['docker-monitor.group']
+            else:
+                label = 'Non groupé'
             
             containers_data.append({
                 'name': container.name,
@@ -25,7 +30,7 @@ def get_containers():
                 'status': container_status,
                 'is_running': container_status == 'running',
                 'started_at': started_at,
-                'labels': container.labels
+                'group': label
             })
         
         return jsonify(containers_data)
