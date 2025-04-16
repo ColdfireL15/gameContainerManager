@@ -25,9 +25,9 @@
                     <div class="d-flex align-items-center">
                         <div class="containers-count me-3">
                             <div class="group-actions me-3">
-                                <button class="btn btn-sm btn-success me-1" onclick="startAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Lancer tout"><i class="bi bi-play-fill"></i></button>
-                                <button class="btn btn-sm btn-warning me-1" onclick="restartAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Redémarrer tout"><i class="bi bi-arrow-repeat text-white"></i></button>
-                                <button class="btn btn-sm btn-danger" onclick="stopAllContainers('{{ group_name }}', event); event.stopPropagation();" title="Arrêter tout"><i class="bi bi-stop-fill"></i></button>
+                                <button class="btn btn-sm btn-success me-1" onclick="event.stopPropagation(); startAllContainers('{{ group_name }}', event)" title="Lancer tout"><i class="bi bi-play-fill"></i></button>
+                                <button class="btn btn-sm btn-warning me-1" onclick="event.stopPropagation(); restartAllContainers('{{ group_name }}', event)" title="Redémarrer tout"><i class="bi bi-arrow-repeat text-white"></i></button>
+                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); stopAllContainers('{{ group_name }}', event)" title="Arrêter tout"><i class="bi bi-stop-fill"></i></button>
                             </div>
                             <span class="running-count">{{ group_containers|selectattr('is_running')|list|length }} running</span>
                             <span class="total-count">{{ group_containers|length }} total</span>
@@ -100,6 +100,28 @@
         const confirmModal = new bootstrap.Modal(document.getElementById('confirmModal'));
         const confirmMessage = document.getElementById('confirmMessage');
         const confirmButton = document.getElementById('confirmButton');
+
+        // Sauvegarder l'état des groupes
+        document.querySelectorAll('.main-card-header').forEach(header => {
+            const collapseId = header.getAttribute('data-bs-target');
+            const collapse = document.querySelector(collapseId);
+            const groupName = header.querySelector('h2').textContent.trim();
+            
+            const isCollapsed = localStorage.getItem(`group_${groupName}`) === 'true' || localStorage.getItem(`group_${groupName}`) === null;
+            if (isCollapsed) {
+                collapse.classList.remove('show');
+            } else {
+                collapse.classList.add('show');
+            }
+
+            collapse.addEventListener('shown.bs.collapse', () => {
+                localStorage.setItem(`group_${groupName}`, 'false');
+            });
+            
+            collapse.addEventListener('hidden.bs.collapse', () => {
+                localStorage.setItem(`group_${groupName}`, 'true');
+            });
+        });
 
         function formatUptime(startedAt) {
             if (!startedAt) return "0m 0s";
@@ -217,12 +239,14 @@
 
         function startAllContainers(groupName, event) {
             event.stopPropagation();
+            const collapseState = localStorage.getItem(`group_${groupName}`);
             if (confirm(`Êtes-vous sûr de vouloir lancer tous les conteneurs du groupe "${groupName}" ?`)) {
                 fetch(`/api/group/${groupName}/start`, {
                     method: 'POST'
                 })
                 .then(response => response.json())
                 .then(() => {
+                    localStorage.setItem(`group_${groupName}`, collapseState);
                     window.location.href = '/';
                 });
             }
@@ -230,12 +254,14 @@
 
         function restartAllContainers(groupName, event) {
             event.stopPropagation();
+            const collapseState = localStorage.getItem(`group_${groupName}`);
             if (confirm(`Êtes-vous sûr de vouloir redémarrer tous les conteneurs du groupe "${groupName}" ?`)) {
                 fetch(`/api/group/${groupName}/restart`, {
                     method: 'POST'
                 })
                 .then(response => response.json())
                 .then(() => {
+                    localStorage.setItem(`group_${groupName}`, collapseState);
                     window.location.href = '/';
                 });
             }
@@ -243,12 +269,14 @@
 
         function stopAllContainers(groupName, event) {
             event.stopPropagation();
+            const collapseState = localStorage.getItem(`group_${groupName}`);
             if (confirm(`Êtes-vous sûr de vouloir arrêter tous les conteneurs du groupe "${groupName}" ?`)) {
                 fetch(`/api/group/${groupName}/stop`, {
                     method: 'POST'
                 })
                 .then(response => response.json())
                 .then(() => {
+                    localStorage.setItem(`group_${groupName}`, collapseState);
                     window.location.href = '/';
                 });
             }
