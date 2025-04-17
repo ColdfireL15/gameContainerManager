@@ -206,11 +206,10 @@ body {
 
 .chevron-icon {
     transition: transform 0.3s ease;
-    transform: rotate(-90deg);
 }
 
-[data-bs-toggle="collapse"]:not(.collapsed) .chevron-icon {
-    transform: rotate(0deg);
+.chevron-icon.collapsed {
+    transform: rotate(-90deg);
 }
 
 .main-card-header h2 {

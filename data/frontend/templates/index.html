@@ -101,11 +101,21 @@
         const confirmMessage = document.getElementById('confirmMessage');
         const confirmButton = document.getElementById('confirmButton');
 
-        // Sauvegarder l'état des groupes
+        function updateChevron(header) {
+            const collapse = document.querySelector(header.dataset.bsTarget);
+            const chevron = header.querySelector('.chevron-icon');
+            if (collapse.classList.contains('show')) {
+                chevron.classList.remove('collapsed');
+            } else {
+                chevron.classList.add('collapsed');
+            }
+        }
+
         document.querySelectorAll('.main-card-header').forEach(header => {
             const collapseId = header.getAttribute('data-bs-target');
             const collapse = document.querySelector(collapseId);
             const groupName = header.querySelector('h2').textContent.trim();
+            const chevron = header.querySelector('.chevron-icon');
             
             const isCollapsed = localStorage.getItem(`group_${groupName}`) === 'true' || localStorage.getItem(`group_${groupName}`) === null;
             if (isCollapsed) {
@@ -113,7 +123,18 @@
             } else {
                 collapse.classList.add('show');
             }
-
+            
+            updateChevron(header);
+            
+            // Pivoter le chevron juste avant le collapse
+            collapse.addEventListener('show.bs.collapse', () => {
+                chevron.classList.remove('collapsed');
+            });
+            
+            collapse.addEventListener('hide.bs.collapse', () => {
+                chevron.classList.add('collapsed');
+            });
+            
             collapse.addEventListener('shown.bs.collapse', () => {
                 localStorage.setItem(`group_${groupName}`, 'false');
             });
