@@ -22,7 +22,7 @@ def get_containers():
             if container.labels.get('docker-monitor.group'):
                 label = container.labels['docker-monitor.group']
             else:
-                label = 'Non groupé'
+                label = 'NoGroup'
             
             containers_data.append({
                 'name': container.name,
@@ -162,6 +162,26 @@ def stop_group(group_name):
             'status': 'success',
             'message': f'All containers in group {group_name} stopped successfully'
         })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+@app.route('/api/container/<container_id>/logs')
+def get_container_logs(container_id):
+    try:
+        container = client.containers.get(container_id)
+        logs = container.logs(tail=100, timestamps=True).decode('utf-8')
+        return jsonify({
+            'status': 'success',
+            'logs': logs
+        })
+    except docker.errors.NotFound:
+        return jsonify({
+            'status': 'error',
+            'message': 'Container not found'
+        }), 404
     except Exception as e:
         return jsonify({
             'status': 'error',

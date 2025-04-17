@@ -66,5 +66,13 @@ def stop_group(group_name):
     except Exception as e:
         return {'status': 'error', 'message': str(e)}, 500
 
+@app.route('/api/container/<container_id>/logs')
+def get_container_logs(container_id):
+    try:
+        response = requests.get(f"{BACKEND_URL}/api/container/{container_id}/logs")
+        return response.json()
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True) 
