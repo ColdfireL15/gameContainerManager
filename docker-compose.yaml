@@ -3,19 +3,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: "frontend"
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: True
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: frontend
     ports:
-      - "5000:5001"
+      - "5000:5000"
 
   backend:
     build:
       context: .
       dockerfile: Dockerfile
-    command: "backend"
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: True
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: backend
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
@@ -25,4 +25,4 @@ services:
       dockerfile: Dockerfile
     environment:
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: ${DISCORD_TOKEN}
-    command: "bot"
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot

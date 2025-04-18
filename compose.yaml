@@ -3,17 +3,17 @@ services:
     image: gamecontainermanager:latest
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: False
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: frontend
     volumes:
       - ./data/frontend:/app/frontend
-    command: "frontend"
     ports:
       - "5000:5000"
 
   backend:
     image: gamecontainermanager:latest
-    command: "backend"
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: False
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: backend
     volumes:
       - ./data/backend:/app/backend
       - /var/run/docker.sock:/var/run/docker.sock
@@ -22,6 +22,6 @@ services:
     image: gamecontainermanager:latest
     environment:
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: "PUT YOUR DISCORD TOKEN HERE" # Need to be set // Can be put in docker secret to avoid exposing the token
+      DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot
     volumes:
       - ./data/bot:/app/bot
-    command: "bot"
