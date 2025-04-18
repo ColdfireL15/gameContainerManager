@@ -17,30 +17,78 @@
             {{ error }}
         </div>
         {% else %}
+        {% set groups = [] %}
         {% for group_name, group_containers in containers|groupby('group') %}
-        {% if group_name != 'NoGroup' %}
-        <div class="main-card">
-            <div class="main-card-header collapsed" data-bs-toggle="collapse" data-bs-target="#group-{{ loop.index }}">
-                <div class="d-flex justify-content-between align-items-center w-100">
-                    <h2 class="mb-0">{{ group_name }}</h2>
-                    <div class="d-flex align-items-center">
-                        <div class="containers-count me-3">
-                            <div class="group-actions me-3">
-                                <button class="btn btn-sm btn-success me-1" onclick="event.stopPropagation(); startAllContainers('{{ group_name }}', event)" title="Lancer tout"><i class="bi bi-play-fill"></i></button>
-                                <button class="btn btn-sm btn-warning me-1" onclick="event.stopPropagation(); restartAllContainers('{{ group_name }}', event)" title="Redémarrer tout"><i class="bi bi-arrow-repeat text-white"></i></button>
-                                <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); stopAllContainers('{{ group_name }}', event)" title="Arrêter tout"><i class="bi bi-stop-fill"></i></button>
+            {% if group_name != 'Groupe non défini' %}
+                {% set _ = groups.append((group_containers|length, group_name, group_containers)) %}
+            {% endif %}
+        {% endfor %}
+
+        {% for length, group_name, group_containers in groups|sort(reverse=true) %}
+            {% if length > 1 %}
+                <div class="main-card">
+                    <div class="main-card-header collapsed" data-bs-toggle="collapse" data-bs-target="#group-{{ loop.index }}">
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <h2 class="mb-0">{{ group_name }}</h2>
+                            <div class="d-flex align-items-center">
+                                <div class="containers-count me-3">
+                                    <div class="group-actions me-3">
+                                        <button class="btn btn-sm btn-success me-1" onclick="event.stopPropagation(); startAllContainers('{{ group_name }}', event)" title="Lancer tout"><i class="bi bi-play-fill"></i></button>
+                                        <button class="btn btn-sm btn-warning me-1" onclick="event.stopPropagation(); restartAllContainers('{{ group_name }}', event)" title="Redémarrer tout"><i class="bi bi-arrow-repeat text-white"></i></button>
+                                        <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); stopAllContainers('{{ group_name }}', event)" title="Arrêter tout"><i class="bi bi-stop-fill"></i></button>
+                                    </div>
+                                    <span class="running-count">{{ group_containers|selectattr('is_running')|list|length }} running</span>
+                                    <span class="total-count">{{ group_containers|length }} total</span>
+                                </div>
+                                <i class="bi bi-chevron-down chevron-icon"></i>
                             </div>
-                            <span class="running-count">{{ group_containers|selectattr('is_running')|list|length }} running</span>
-                            <span class="total-count">{{ group_containers|length }} total</span>
                         </div>
-                        <i class="bi bi-chevron-down chevron-icon"></i>
+                    </div>
+                    <div class="collapse" id="group-{{ loop.index }}">
+                        <div class="main-card-body">
+                            <div class="containers-grid">
+                                {% for container in group_containers %}
+                                    <div class="container-card">
+                                        <div class="container-header">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <h3>{{ container.name }}</h3>
+                                                <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
+                                            </div>
+                                        </div>
+                                        <div class="container-info">
+                                            <div class="container-status">
+                                                <span class="status-indicator {% if container.is_running %}status-running{% else %}status-stopped{% endif %}"></span>
+                                                <span class="status-text">{{ container.status }}</span>
+                                                <span class="uptime">
+                                                    {% if container.is_running %}
+                                                    <span data-started="{{ container.started_at }}">Uptime: <span class="uptime-value">Calculating...</span></span>
+                                                    {% else %}
+                                                    <span class="uptime-value">Stopped</span>
+                                                    {% endif %}
+                                                </span>
+                                            </div>
+                                            <div class="container-actions">
+                                                {% if container.is_running %}
+                                                <button class="btn btn-warning" onclick="confirmAction('restart', '{{ container.id }}', '{{ container.name }}')">Redémarrer</button>
+                                                <button class="btn btn-danger" onclick="confirmAction('stop', '{{ container.id }}', '{{ container.name }}')">Arrêter</button>
+                                                {% else %}
+                                                <button class="btn btn-success" onclick="startContainer('{{ container.id }}')">Lancer</button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="collapse" id="group-{{ loop.index }}">
-                <div class="main-card-body">
-                    <div class="containers-grid">
-                        {% for container in group_containers %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="containers-grid">
+            {% for group_name, group_containers in containers|groupby('group') %}
+                {% if group_name == 'Groupe non défini' or group_containers|length == 1 %}
+                    {% for container in group_containers %}
                         <div class="container-card">
                             <div class="container-header">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -70,50 +118,11 @@
                                 </div>
                             </div>
                         </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="containers-grid">
-            {% for container in group_containers %}
-            <div class="container-card">
-                <div class="container-header">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h3>{{ container.name }}</h3>
-                        <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
-                    </div>
-                </div>
-                <div class="container-info">
-                    <div class="container-status">
-                        <span class="status-indicator {% if container.is_running %}status-running{% else %}status-stopped{% endif %}"></span>
-                        <span class="status-text">{{ container.status }}</span>
-                        <span class="uptime">
-                            {% if container.is_running %}
-                            <span data-started="{{ container.started_at }}">Uptime: <span class="uptime-value">Calculating...</span></span>
-                            {% else %}
-                            <span class="uptime-value">Stopped</span>
-                            {% endif %}
-                        </span>
-                    </div>
-                    <div class="container-actions">
-                        {% if container.is_running %}
-                        <button class="btn btn-warning" onclick="confirmAction('restart', '{{ container.id }}', '{{ container.name }}')">Redémarrer</button>
-                        <button class="btn btn-danger" onclick="confirmAction('stop', '{{ container.id }}', '{{ container.name }}')">Arrêter</button>
-                        {% else %}
-                        <button class="btn btn-success" onclick="startContainer('{{ container.id }}')">Lancer</button>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+                    {% endfor %}
+                {% endif %}
             {% endfor %}
         </div>
         {% endif %}
-        {% endfor %}
-        {% endif %}
-    </div>
-
     <!-- Modal de confirmation -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">

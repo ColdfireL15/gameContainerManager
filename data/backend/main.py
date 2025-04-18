@@ -21,8 +21,10 @@ def get_containers():
 
             if container.labels.get('docker-monitor.group'):
                 label = container.labels['docker-monitor.group']
+            elif container.labels.get('com.docker.compose.project'):
+                label = container.labels['com.docker.compose.project']
             else:
-                label = 'NoGroup'
+                label = 'Groupe non défini'
             
             containers_data.append({
                 'name': container.name,

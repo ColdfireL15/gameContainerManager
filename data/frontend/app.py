@@ -3,7 +3,6 @@ import requests
 import os
 
 app = Flask(__name__)
-app.secret_key = os.getenv('SECRET_KEY', 'dev')  # Nécessaire pour les messages flash
 
 BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:5001')
 
