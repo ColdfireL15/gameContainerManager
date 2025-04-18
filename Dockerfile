@@ -15,7 +15,6 @@ RUN chmod +x entrypoint.sh
 
 # Exposer les ports nécessaires
 EXPOSE 5000
-EXPOSE 5001
 
 # Définir le script comme point d'entrée
 ENTRYPOINT ["./entrypoint.sh"]
