@@ -1,6 +1,10 @@
 from flask import Flask, render_template, flash, redirect, url_for
 import requests
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
 
 app = Flask(__name__)
 
@@ -74,4 +78,4 @@ def get_container_logs(container_id):
         return {'status': 'error', 'message': str(e)}, 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True) 
+    app.run(host='0.0.0.0', port=5000, debug=DEBUG) 

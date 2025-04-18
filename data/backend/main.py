@@ -1,6 +1,10 @@
 from flask import Flask, jsonify
 import docker
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
 
 app = Flask(__name__)
 
@@ -9,7 +13,7 @@ client = docker.DockerClient(base_url='unix://var/run/docker.sock')
 @app.route('/api/containers')
 def get_containers():
     try:
-        containers = client.containers.list(all=True, filters={"label": "docker-monitor.enable=true"})
+        containers = client.containers.list(all=True, filters={"label": "gamecontainermanager.enable=true"})
         
         if not containers:
             return jsonify([])
@@ -19,8 +23,8 @@ def get_containers():
             container_status = container.status
             started_at = container.attrs['State']['StartedAt'] if container_status == 'running' else None
 
-            if container.labels.get('docker-monitor.group'):
-                label = container.labels['docker-monitor.group']
+            if container.labels.get('gamecontainermanager.group'):
+                label = container.labels['gamecontainermanager.group']
             elif container.labels.get('com.docker.compose.project'):
                 label = container.labels['com.docker.compose.project']
             else:
@@ -97,8 +101,8 @@ def start_group(group_name):
             all=True,
             filters={
                 "label": [
-                    "docker-monitor.enable=true",
-                    f"docker-monitor.group={group_name}"
+                    "gamecontainermanager.enable=true",
+                    f"gamecontainermanager.group={group_name}"
                 ]
             }
         )
@@ -124,8 +128,8 @@ def restart_group(group_name):
             all=True,
             filters={
                 "label": [
-                    "docker-monitor.enable=true",
-                    f"docker-monitor.group={group_name}"
+                    "gamecontainermanager.enable=true",
+                    f"gamecontainermanager.group={group_name}"
                 ]
             }
         )
@@ -150,8 +154,8 @@ def stop_group(group_name):
             all=True,
             filters={
                 "label": [
-                    "docker-monitor.enable=true",
-                    f"docker-monitor.group={group_name}"
+                    "gamecontainermanager.enable=true",
+                    f"gamecontainermanager.group={group_name}"
                 ]
             }
         )
@@ -191,4 +195,4 @@ def get_container_logs(container_id):
         }), 500
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000) 
+    app.run(host='0.0.0.0', port=5000, debug=DEBUG) 
