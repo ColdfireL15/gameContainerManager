@@ -31,6 +31,3 @@ out/
 # OS files
 .DS_Store
 Thumbs.db 
-
-# Bot discord pour le moment
-data/bot/
