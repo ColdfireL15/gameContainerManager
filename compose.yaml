@@ -1,6 +1,8 @@
 services:
   frontend:
     image: gamecontainermanager:latest
+    environment:
+      DOCKERCONTAINERMANAGER_DEBUG: False
     volumes:
       - ./data/frontend:/app/frontend
     command: "frontend"
@@ -10,11 +12,11 @@ services:
   backend:
     image: gamecontainermanager:latest
     command: "backend"
+    environment:
+      DOCKERCONTAINERMANAGER_DEBUG: False
     volumes:
       - ./data/backend:/app/backend
       - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - "5001:5001"
 
   bot:
     image: gamecontainermanager:latest
