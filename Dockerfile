@@ -8,8 +8,7 @@ WORKDIR /app
 COPY ./data .
 
 # Set environment(s) variable(s)
-ENV DOCKERCONTAINERMANAGER_DEBUG=FALSE
-ENV DISCORD_TOKEN=
+ENV DOCKERCONTAINERMANAGER_DEBUG=False
 
 # Install python dependencies
 RUN pip install -r requirements.txt
