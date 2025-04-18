@@ -1,0 +1,25 @@
+services:
+  frontend:
+    image: gamecontainermanager:latest
+    volumes:
+      - ./data/frontend:/app/frontend
+    command: "frontend"
+    ports:
+      - "5000:5000"
+
+  backend:
+    image: gamecontainermanager:latest
+    command: "backend"
+    volumes:
+      - ./data/backend:/app/backend
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "5001:5001"
+
+  bot:
+    image: gamecontainermanager:latest
+    environment:
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+    volumes:
+      - ./data/bot:/app/bot
+    command: "bot"
