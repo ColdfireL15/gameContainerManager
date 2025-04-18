@@ -19,6 +19,7 @@ body {
 .container {
     max-width: 800px;
     margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 
 .containers-grid {
