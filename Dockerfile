@@ -1,20 +1,24 @@
-# Utiliser une image Python officielle comme base
+# Use official Python image as base
 FROM python:3.9-slim
 
-# Définir le répertoire de travail
+# Set working directory
 WORKDIR /app
 
-# Copier les fichiers du projet
+# Copy project files
 COPY ./data .
 
-# Installer les dépendances
+# Set environment(s) variable(s)
+ENV DOCKERCONTAINERMANAGER_DEBUG=FALSE
+ENV DISCORD_TOKEN=
+
+# Install python dependencies
 RUN pip install -r requirements.txt
 
-# Rendre le script exécutable
+# Make the script executable
 RUN chmod +x entrypoint.sh
 
-# Exposer les ports nécessaires
+# Expose necessary ports
 EXPOSE 5000
 
-# Définir le script comme point d'entrée
+# Set the script as entry point
 ENTRYPOINT ["./entrypoint.sh"]
