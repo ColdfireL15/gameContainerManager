@@ -21,7 +21,7 @@ services:
   bot:
     image: gamecontainermanager:latest
     environment:
-      DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DOCKERCONTAINERMANAGER_DISCORD_TOKEN: "PUT YOUR DISCORD TOKEN HERE" # Need to be set // Can be put in docker secret to avoid exposing the token
     volumes:
       - ./data/bot:/app/bot
     command: "bot"
