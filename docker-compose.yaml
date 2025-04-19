@@ -28,5 +28,5 @@ services:
     environment:
       # DOCKERCONTAINERMANAGER_BACKEND_URL: http://backend:5000 # OPTIONNAL | Adress where the backend is reachable for the frontend
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: ${DISCORD_TOKEN}
-      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
+      DOCKERCONTAINERMANAGER_FRONTEND_URL: 'https://games-manager.example.com' # Public url of your frontend service
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot

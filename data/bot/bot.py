@@ -19,7 +19,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-LOGS_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONT_URL')
+LOGS_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONTEND_URL')
 
 global_cooldowns = {}
 
