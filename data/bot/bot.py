@@ -107,7 +107,6 @@ class ContainerActions(View):
                 )
                 return False
         
-        # Vérifier le cooldown spécifique au bouton
         if user_id in self.last_command_time:
             if current_time - self.last_command_time[user_id] < 10:
                 await interaction.response.send_message(
@@ -138,6 +137,14 @@ class ContainerActions(View):
                     container_id = container['id']
                     response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/restart")
                     response.raise_for_status()
+                    
+                    public_embed = discord.Embed(
+                        title="Action sur un conteneur",
+                        description=f"🔄 Le conteneur **{self.container_name}** a été redémarré par {interaction.user.mention}",
+                        color=discord.Color.green()
+                    )
+                    public_embed.set_footer(text="via Discord")
+                    await interaction.channel.send(embed=public_embed, delete_after=86400)
                 except requests.RequestException as e:
                     pass
                 return
@@ -165,6 +172,14 @@ class ContainerActions(View):
                     container_id = container['id']
                     response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/stop")
                     response.raise_for_status()
+                    
+                    public_embed = discord.Embed(
+                        title="Action sur un conteneur",
+                        description=f"🟥 Le conteneur **{self.container_name}** a été arrêté par {interaction.user.mention}",
+                        color=discord.Color.red()
+                    )
+                    public_embed.set_footer(text="via Discord")
+                    await interaction.channel.send(embed=public_embed, delete_after=86400)
                 except requests.RequestException as e:
                     pass
                 return
