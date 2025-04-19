@@ -6,6 +6,9 @@ from discord.ext import commands
 from dotenv import load_dotenv
 from discord import app_commands
 from discord.ui import Button, View
+from datetime import datetime
+from dateutil import parser
+
 
 load_dotenv()
 TOKEN = os.getenv('DOCKERCONTAINERMANAGER_DISCORD_TOKEN')
@@ -15,7 +18,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-logs_url = "http://192.168.1.11:5000/"
+logs_url = "https://python-test.chou-dou.com/"
 
 def load_data():
     try:
@@ -28,6 +31,42 @@ def load_data():
 
 def pad_right(text, length):
             return f"{text:<{length}}"
+
+def format_uptime(started_at, status):
+    if status != 'running':
+        return "Stopped"
+    
+    if not started_at:
+        return "N/A"
+        
+    try:
+        start_time = parser.parse(started_at)
+        if not start_time.tzinfo:
+            start_time = start_time.replace(tzinfo=datetime.now().astimezone().tzinfo)
+            
+        current_time = datetime.now().astimezone()
+        diff = current_time - start_time
+        
+        total_seconds = int(diff.total_seconds())
+        days = total_seconds // (24 * 3600)
+        hours = (total_seconds % (24 * 3600)) // 3600
+        minutes = (total_seconds % 3600) // 60
+        seconds = total_seconds % 60
+        
+        parts = []
+        if days > 0:
+            parts.append(f"{days}j")
+        if hours > 0:
+            parts.append(f"{hours}h")
+        if minutes > 0:
+            parts.append(f"{minutes}m")
+        if seconds > 0 or not parts:
+            parts.append(f"{seconds}s")
+            
+        return " ".join(parts)
+        
+    except Exception as e:
+        return "N/A"
 
 class ContainerActions(View):
     def __init__(self, container_name, container_status):
@@ -171,6 +210,9 @@ class ContainerSelect(discord.ui.Select):
         self.containers = {c['name']: c for c in containers}
 
     async def callback(self, interaction: discord.Interaction):
+
+        self.disabled = True
+        
         container = self.containers[self.values[0]]
         if container['status'] == 'running':
             couleur = discord.Color.green()
@@ -186,11 +228,15 @@ class ContainerSelect(discord.ui.Select):
         width = 41
         label_width = 12
         content_width = width - label_width - 3
+        
+        status_symbol = "🟩" if container['status'] == 'running' else "🟥"
 
         top_line    = "┌" + "─" * (width - 2) + "┐"
         name_line   = f" {status_symbol} {pad_right(container['name'], width - 8)}{status_symbol}"
         middle_line = f"├{'─' * (label_width)}┬{'─' * (content_width)}┤"
+        middle_line_in = f"├{'─' * (label_width)}┼{'─' * (content_width)}┤"
         status_line = f"│ {pad_right('Status', label_width - 1)}│ {pad_right(container['status'], content_width - 1)}│"
+        uptime_line = f"│ {pad_right('Uptime', label_width - 1)}│ {pad_right(format_uptime(container['started_at'], container['status']), content_width - 1)}│"
         bottom_line = f"└{'─' * (label_width)}┴{'─' * (content_width)}┘"
         
         container_info = f"""```
@@ -198,6 +244,8 @@ class ContainerSelect(discord.ui.Select):
 {name_line}
 {middle_line}
 {status_line}
+{middle_line_in}
+{uptime_line}
 {bottom_line}```"""
         
         embed.add_field(
@@ -212,20 +260,15 @@ class ContainerSelect(discord.ui.Select):
 class ContainerListView(discord.ui.View):
     def __init__(self, containers):
         super().__init__(timeout=300)
-        self.add_item(ContainerSelect(containers))
+        self.select = ContainerSelect(containers)
+        self.add_item(self.select)
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
 
 @bot.tree.command(name="status", description="Affiche l'état de tous les conteneurs")
 async def status(interaction: discord.Interaction):
-
-    is_mobile = interaction.user.is_on_mobile()
-    
-    if is_mobile:
-        await interaction.response.send_message(
-            f"Pour consulter l'état des containers sur mobile veuillez vous rendre au lien suivant : {logs_url}",
-            ephemeral=True
-        )
-        return
-
     data = load_data()
     embed = discord.Embed(
         title="État des conteneurs",
@@ -233,18 +276,18 @@ async def status(interaction: discord.Interaction):
     )
     
     for container in data:
-
         width = 41
         label_width = 12
         content_width = width - label_width - 3
         
         status_symbol = "🟩" if container['status'] == 'running' else "🟥"
 
-
         top_line    = "┌" + "─" * (width - 2) + "┐"
         name_line   = f" {status_symbol} {pad_right(container['name'], width - 8)}{status_symbol}"
         middle_line = f"├{'─' * (label_width)}┬{'─' * (content_width)}┤"
+        middle_line_in = f"├{'─' * (label_width)}┼{'─' * (content_width)}┤"
         status_line = f"│ {pad_right('Status', label_width - 1)}│ {pad_right(container['status'], content_width - 1)}│"
+        uptime_line = f"│ {pad_right('Uptime', label_width - 1)}│ {pad_right(format_uptime(container['started_at'], container['status']), content_width - 1)}│"
         bottom_line = f"└{'─' * (label_width)}┴{'─' * (content_width)}┘"
         
         container_info = f"""```
@@ -252,6 +295,8 @@ async def status(interaction: discord.Interaction):
 {name_line}
 {middle_line}
 {status_line}
+{middle_line_in}
+{uptime_line}
 {bottom_line}```"""
         
         embed.add_field(
