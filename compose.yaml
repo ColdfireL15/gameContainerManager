@@ -21,6 +21,7 @@ services:
   bot:
     image: gamecontainermanager:latest
     environment:
+      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: "PUT YOUR DISCORD TOKEN HERE" # Need to be set // Can be put in docker secret to avoid exposing the token
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot
     volumes:

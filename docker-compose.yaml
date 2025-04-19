@@ -24,5 +24,6 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: ${DISCORD_TOKEN}
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot

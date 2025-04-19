@@ -19,7 +19,7 @@ intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
-logs_url = "https://python-test.chou-dou.com/"
+LOGS_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONT_URL')
 
 global_cooldowns = {}
 
@@ -199,7 +199,7 @@ class ContainerActions(View):
                 logs = logs[-1900:]
                 
                 await interaction.response.send_message(
-                    f"Logs : {self.container_name}\n```\n{logs}```\n[Voir plus de logs →]({logs_url})",
+                    f"Logs : {self.container_name}\n```\n{logs}```\n[Voir plus de logs →]({LOGS_URL})",
                     ephemeral=True
                 )
             else:
