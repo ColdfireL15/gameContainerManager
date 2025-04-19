@@ -21,6 +21,8 @@ intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 logs_url = "https://python-test.chou-dou.com/"
 
+global_cooldowns = {}
+
 def load_data():
     try:
         response = requests.get(f"{BACKEND_URL}/api/containers")
@@ -74,6 +76,7 @@ class ContainerActions(View):
         super().__init__(timeout=300)
         self.container_name = container_name
         self.container_status = container_status
+        self.last_command_time = {}
 
         if container_status == 'running':
             self.restart_button = Button(label="Redémarrer", style=discord.ButtonStyle.green)
@@ -92,83 +95,84 @@ class ContainerActions(View):
         self.logs_button.callback = self.logs_button_callback
         self.add_item(self.logs_button)
 
-    async def restart_button_callback(self, interaction: discord.Interaction):
-        max_retries = 3
-        retry_delay = 2
+    async def check_cooldown(self, interaction: discord.Interaction) -> bool:
+        current_time = time.time()
+        user_id = interaction.user.id
         
-        for attempt in range(max_retries):
-            try:
-                data = load_data()
-                for container in data:
-                    if container['name'] == self.container_name:
-                        container_id = container['id']
-                        response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/restart", timeout=10)
-                        response.raise_for_status()
-                        
-                        embed = discord.Embed(
-                            title=f"{self.container_name}",
-                            description="✅ Redémarré avec succès",
-                            color=discord.Color.green()
-                        )
-                        await interaction.response.edit_message(embed=embed, view=None)
-                        return
-                        
+        if user_id in global_cooldowns:
+            if current_time - global_cooldowns[user_id] < 10:
                 await interaction.response.send_message(
-                    f"Conteneur {self.container_name} non trouvé.", 
+                    "Veuillez attendre 10 secondes avant d'utiliser à nouveau cette commande.",
                     ephemeral=True
                 )
+                return False
+        
+        # Vérifier le cooldown spécifique au bouton
+        if user_id in self.last_command_time:
+            if current_time - self.last_command_time[user_id] < 10:
+                await interaction.response.send_message(
+                    "Veuillez attendre 10 secondes avant d'utiliser à nouveau cette commande.",
+                    ephemeral=True
+                )
+                return False
+        
+        self.last_command_time[user_id] = current_time
+        global_cooldowns[user_id] = current_time
+        return True
+
+    async def restart_button_callback(self, interaction: discord.Interaction):
+        if not await self.check_cooldown(interaction):
+            return
+            
+        data = load_data()
+        for container in data:
+            if container['name'] == self.container_name:
+                embed = discord.Embed(
+                    title=f"{self.container_name}",
+                    description="✅ Redémarré avec succès",
+                    color=discord.Color.green()
+                )
+                await interaction.response.edit_message(embed=embed, view=None)
+                
+                try:
+                    container_id = container['id']
+                    response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/restart")
+                    response.raise_for_status()
+                except requests.RequestException as e:
+                    pass
                 return
                 
-            except requests.exceptions.RequestException as e:
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    continue
-                error_embed = discord.Embed(
-                    title="Erreur",
-                    description=f"❌ Erreur lors du redémarrage du conteneur après {max_retries} tentatives: {str(e)}",
-                    color=discord.Color.red()
-                )
-                await interaction.response.send_message(embed=error_embed, ephemeral=True)
-                return
+        await interaction.response.send_message(
+            f"Conteneur {self.container_name} non trouvé.", 
+            ephemeral=True
+        )
 
     async def stop_button_callback(self, interaction: discord.Interaction):
-        max_retries = 3
-        retry_delay = 2
-        
-        for attempt in range(max_retries):
-            try:
-                data = load_data()
-                for container in data:
-                    if container['name'] == self.container_name:
-                        container_id = container['id']
-                        response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/stop", timeout=10)
-                        response.raise_for_status()
-                        
-                        embed = discord.Embed(
-                            title=f"{self.container_name}",
-                            description="✅ Arrêté avec succès",
-                            color=discord.Color.red()
-                        )
-                        await interaction.response.edit_message(embed=embed, view=None)
-                        return
-                        
-                await interaction.response.send_message(
-                    f"Conteneur {self.container_name} non trouvé.", 
-                    ephemeral=True
-                )
-                return
-                
-            except requests.exceptions.RequestException as e:
-                if attempt < max_retries - 1:
-                    time.sleep(retry_delay)
-                    continue
-                error_embed = discord.Embed(
-                    title="Erreur",
-                    description=f"❌ Erreur lors de l'arrêt du conteneur après {max_retries} tentatives: {str(e)}",
+        if not await self.check_cooldown(interaction):
+            return
+            
+        data = load_data()
+        for container in data:
+            if container['name'] == self.container_name:
+                embed = discord.Embed(
+                    title=f"{self.container_name}",
+                    description="✅ Arrêté avec succès",
                     color=discord.Color.red()
                 )
-                await interaction.response.send_message(embed=error_embed, ephemeral=True)
+                await interaction.response.edit_message(embed=embed, view=None)
+                
+                try:
+                    container_id = container['id']
+                    response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/stop")
+                    response.raise_for_status()
+                except requests.RequestException as e:
+                    pass
                 return
+                
+        await interaction.response.send_message(
+            f"Conteneur {self.container_name} non trouvé.", 
+            ephemeral=True
+        )
 
     async def logs_button_callback(self, interaction: discord.Interaction):
         try:
@@ -290,6 +294,17 @@ class ContainerListView(discord.ui.View):
 
 @bot.tree.command(name="status", description="Affiche l'état de tous les conteneurs")
 async def status(interaction: discord.Interaction):
+    current_time = time.time()
+    user_id = interaction.user.id
+    
+    if user_id in global_cooldowns:
+        if current_time - global_cooldowns[user_id] < 10:
+            await interaction.response.send_message(
+                "Veuillez attendre 10 secondes avant d'utiliser à nouveau cette commande.",
+                ephemeral=True
+            )
+            return
+
     data = load_data()
     embed = discord.Embed(
         title="État des conteneurs",
@@ -331,6 +346,14 @@ async def status(interaction: discord.Interaction):
     
     view = ContainerListView(data)
     await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+
+@status.error
+async def status_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    if isinstance(error, app_commands.CommandOnCooldown):
+        await interaction.response.send_message(
+            f"Veuillez attendre {error.retry_after:.1f} secondes avant d'utiliser à nouveau cette commande.",
+            ephemeral=True
+        )
 
 @bot.tree.command(name="aide", description="Affiche l'aide du bot")
 async def help_command(interaction: discord.Interaction):
