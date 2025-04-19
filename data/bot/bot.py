@@ -62,11 +62,11 @@ class ContainerActions(View):
                     response.raise_for_status()
                     
                     embed = discord.Embed(
-                        title=f"Conteneur {self.container_name}",
+                        title=f"{self.container_name}",
                         description="✅ Redémarré avec succès",
                         color=discord.Color.green()
                     )
-                    await interaction.response.edit_message(embed=embed, view=None, ephemeral=True)
+                    await interaction.response.edit_message(embed=embed, view=None)
                 except requests.RequestException as e:
                     error_embed = discord.Embed(
                         title="Erreur",
@@ -91,11 +91,11 @@ class ContainerActions(View):
                     response.raise_for_status()
                     
                     embed = discord.Embed(
-                        title=f"Conteneur {self.container_name}",
+                        title=f"{self.container_name}",
                         description="✅ Arrêté avec succès",
                         color=discord.Color.red()
                     )
-                    await interaction.response.edit_message(embed=embed, view=None, ephemeral=True)
+                    await interaction.response.edit_message(embed=embed, view=None)
                 except requests.RequestException as e:
                     error_embed = discord.Embed(
                         title="Erreur",
