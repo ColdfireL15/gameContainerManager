@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: Dockerfile
     environment:
+      # DOCKERCONTAINERMANAGER_BACKEND_URL: http://backend:5000 # OPTIONNAL | Adress where the backend is reachable for the frontend
       DOCKERCONTAINERMANAGER_DEBUG: True
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: frontend
     ports:
@@ -19,11 +20,13 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+# Optional service
   bot:
     build:
       context: .
       dockerfile: Dockerfile
     environment:
-      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
+      # DOCKERCONTAINERMANAGER_BACKEND_URL: http://backend:5000 # OPTIONNAL | Adress where the backend is reachable for the frontend
       DOCKERCONTAINERMANAGER_DISCORD_TOKEN: ${DISCORD_TOKEN}
+      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot

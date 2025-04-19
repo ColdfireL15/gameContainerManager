@@ -8,7 +8,7 @@ DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
 
 app = Flask(__name__)
 
-BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:5000')
+BACKEND_URL = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_URL', 'http://backend:5000')
 
 @app.route('/')
 def index():

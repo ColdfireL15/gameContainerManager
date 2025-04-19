@@ -14,7 +14,7 @@ import time
 load_dotenv()
 TOKEN = os.getenv('DOCKERCONTAINERMANAGER_DISCORD_TOKEN')
 DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
-BACKEND_URL = os.getenv('BACKEND_URL', 'http://backend:5000')
+BACKEND_URL = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_URL', 'http://backend:5000')
 intents = discord.Intents.default()
 intents.message_content = True
 intents.members = True
