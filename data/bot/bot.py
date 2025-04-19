@@ -8,6 +8,7 @@ from discord import app_commands
 from discord.ui import Button, View
 from datetime import datetime
 from dateutil import parser
+import time
 
 
 load_dotenv()
@@ -92,62 +93,82 @@ class ContainerActions(View):
         self.add_item(self.logs_button)
 
     async def restart_button_callback(self, interaction: discord.Interaction):
-        data = load_data()
-        for container in data:
-            if container['name'] == self.container_name:
-                try:
-                    container_id = container['id']
-                    response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/restart")
-                    response.raise_for_status()
-                    
-                    embed = discord.Embed(
-                        title=f"{self.container_name}",
-                        description="✅ Redémarré avec succès",
-                        color=discord.Color.green()
-                    )
-                    await interaction.response.edit_message(embed=embed, view=None)
-                except requests.RequestException as e:
-                    error_embed = discord.Embed(
-                        title="Erreur",
-                        description=f"❌ Erreur lors du redémarrage du conteneur: {str(e)}",
-                        color=discord.Color.red()
-                    )
-                    await interaction.response.send_message(embed=error_embed, ephemeral=True)
-                return
+        max_retries = 3
+        retry_delay = 2
         
-        await interaction.response.send_message(
-            f"Conteneur {self.container_name} non trouvé.", 
-            ephemeral=True
-        )
-
-    async def stop_button_callback(self, interaction: discord.Interaction):
-        data = load_data()
-        for container in data:
-            if container['name'] == self.container_name:
-                try:
-                    container_id = container['id']
-                    response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/stop")
-                    response.raise_for_status()
-                    
-                    embed = discord.Embed(
-                        title=f"{self.container_name}",
-                        description="✅ Arrêté avec succès",
-                        color=discord.Color.red()
-                    )
-                    await interaction.response.edit_message(embed=embed, view=None)
-                except requests.RequestException as e:
-                    error_embed = discord.Embed(
-                        title="Erreur",
-                        description=f"❌ Erreur lors de l'arrêt du conteneur: {str(e)}",
-                        color=discord.Color.red()
-                    )
-                    await interaction.response.send_message(embed=error_embed, ephemeral=True)
+        for attempt in range(max_retries):
+            try:
+                data = load_data()
+                for container in data:
+                    if container['name'] == self.container_name:
+                        container_id = container['id']
+                        response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/restart", timeout=10)
+                        response.raise_for_status()
+                        
+                        embed = discord.Embed(
+                            title=f"{self.container_name}",
+                            description="✅ Redémarré avec succès",
+                            color=discord.Color.green()
+                        )
+                        await interaction.response.edit_message(embed=embed, view=None)
+                        return
+                        
+                await interaction.response.send_message(
+                    f"Conteneur {self.container_name} non trouvé.", 
+                    ephemeral=True
+                )
                 return
                 
-        await interaction.response.send_message(
-            f"Conteneur {self.container_name} non trouvé.", 
-            ephemeral=True
-        )
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                error_embed = discord.Embed(
+                    title="Erreur",
+                    description=f"❌ Erreur lors du redémarrage du conteneur après {max_retries} tentatives: {str(e)}",
+                    color=discord.Color.red()
+                )
+                await interaction.response.send_message(embed=error_embed, ephemeral=True)
+                return
+
+    async def stop_button_callback(self, interaction: discord.Interaction):
+        max_retries = 3
+        retry_delay = 2
+        
+        for attempt in range(max_retries):
+            try:
+                data = load_data()
+                for container in data:
+                    if container['name'] == self.container_name:
+                        container_id = container['id']
+                        response = requests.post(f"{BACKEND_URL}/api/container/{container_id}/stop", timeout=10)
+                        response.raise_for_status()
+                        
+                        embed = discord.Embed(
+                            title=f"{self.container_name}",
+                            description="✅ Arrêté avec succès",
+                            color=discord.Color.red()
+                        )
+                        await interaction.response.edit_message(embed=embed, view=None)
+                        return
+                        
+                await interaction.response.send_message(
+                    f"Conteneur {self.container_name} non trouvé.", 
+                    ephemeral=True
+                )
+                return
+                
+            except requests.exceptions.RequestException as e:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                    continue
+                error_embed = discord.Embed(
+                    title="Erreur",
+                    description=f"❌ Erreur lors de l'arrêt du conteneur après {max_retries} tentatives: {str(e)}",
+                    color=discord.Color.red()
+                )
+                await interaction.response.send_message(embed=error_embed, ephemeral=True)
+                return
 
     async def logs_button_callback(self, interaction: discord.Interaction):
         try:
