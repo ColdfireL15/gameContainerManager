@@ -1,7 +1,7 @@
 services:
   frontend:
     build:
-      context: .
+      context: ../../
       dockerfile: Dockerfile
     environment:
       # DOCKERCONTAINERMANAGER_BACKEND_URL: http://backend:5000 # OPTIONNAL | Adress where the backend is reachable for the frontend
@@ -12,7 +12,7 @@ services:
 
   backend:
     build:
-      context: .
+      context: ../../
       dockerfile: Dockerfile
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: True
@@ -23,7 +23,7 @@ services:
 # Optional service
   bot:
     build:
-      context: .
+      context: ../../
       dockerfile: Dockerfile
     environment:
       # DOCKERCONTAINERMANAGER_BACKEND_URL: http://backend:5000 # OPTIONNAL | Adress where the backend is reachable for the frontend

@@ -8,9 +8,12 @@ WORKDIR /app
 COPY ./data .
 
 # Set environment(s) variable(s)
+ENV DOCKERCONTAINERMANAGER_AUTHENTICATION=False
 ENV DOCKERCONTAINERMANAGER_DEBUG=False
-ENV DOCKERCONTAINERMANAGER_AUTHENTICATION=True
-ENV DOCKERCONTAINERMANAGER_FAVICON_URL=https://mondomaine.com/favicon.ico
+ENV DOCKERCONTAINERMANAGER_BACKEND_URL="http://backend:5000"
+ENV DOCKERCONTAINERMANAGER_FAVICON_URL='./static/icon/gameContainerManager.ico'
+ENV DOCKERCONTAINERMANAGER_SERVICE_TYPE=frontend
+
 # Install python dependencies
 RUN pip install -r requirements.txt
 
