@@ -10,15 +10,15 @@ fi
 case "$DOCKERCONTAINERMANAGER_SERVICE_TYPE" in
     "frontend")
         echo "Starting frontend service..."
-        python frontend/app.py
+        python -u frontend/app.py
         ;;
     "backend")
         echo "Starting backend service..."
-        python backend/main.py
+        python -u backend/main.py
         ;;
     "bot")
         echo "Starting bot service..."
-        python bot/bot.py
+        python -u bot/bot.py
         ;;
     *)
         echo "Error: Invalid DOCKERCONTAINERMANAGER_SERVICE_TYPE value"

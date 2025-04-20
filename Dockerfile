@@ -9,7 +9,8 @@ COPY ./data .
 
 # Set environment(s) variable(s)
 ENV DOCKERCONTAINERMANAGER_DEBUG=False
-
+ENV DOCKERCONTAINERMANAGER_AUTHENTICATION=True
+ENV DOCKERCONTAINERMANAGER_FAVICON_URL=https://mondomaine.com/favicon.ico
 # Install python dependencies
 RUN pip install -r requirements.txt
 

@@ -33,7 +33,7 @@ Fill a file `.env` at the root of `PATH/OF/YOUR/FOLDER` with desired vars (see b
 | DOCKERCONTAINERMANAGER_BACKEND_URL | bot, frontend | ✅ | http://backend:5000 | *http://your.service.name:5000* | Url for your backend container (can be in docker's local network) |
 | DOCKERCONTAINERMANAGER_DEBUG | All | ❌ | False | `False` // `True` | Enable debug logs level |
 | DOCKERCONTAINERMANAGER_DISCORD_TOKEN | bot | ✅ | False | *YOUR_DISCORD_TOKEN* | Discord auth token for bot, see (Discord doc)[https://discord.com/developers/docs/intro] |
-| DOCKERCONTAINERMANAGER_FRONTEND_URL | bot | ❌ | http://backend:5000 | *https://your.domain.com* | Frontend service address is reachable |
+| DOCKERCONTAINERMANAGER_FRONTEND_URL | bot, frontend | ❌ | **NONE** | *https://your.domain.com* | Frontend service public address is reachable |
 | DOCKERCONTAINERMANAGER_SERVICE_TYPE | backend, bot, frontend | ✅ | **NONE** | `backend`, `bot`, `frontend` | service name that you want run |
 
 ## Examples
