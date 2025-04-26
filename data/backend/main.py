@@ -3,6 +3,7 @@ import docker
 import os
 from datetime import datetime
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
@@ -10,6 +11,64 @@ DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
 app = Flask(__name__)
 
 client = docker.DockerClient(base_url='unix://var/run/docker.sock')
+
+def convert_ansi_to_html(text):
+    ansi_colors = {
+        '30': 'ansi-black',
+        '31': 'ansi-red',
+        '32': 'ansi-green',
+        '33': 'ansi-yellow',
+        '34': 'ansi-blue',
+        '35': 'ansi-magenta',
+        '36': 'ansi-cyan',
+        '37': 'ansi-white',
+        '90': 'ansi-bright-black',
+        '91': 'ansi-bright-red',
+        '92': 'ansi-bright-green',
+        '93': 'ansi-bright-yellow',
+        '94': 'ansi-bright-blue',
+        '95': 'ansi-bright-magenta',
+        '96': 'ansi-bright-cyan',
+        '97': 'ansi-bright-white',
+        '1': 'ansi-bold',
+        '2': 'ansi-dim',
+        '3': 'ansi-italic',
+        '4': 'ansi-underline',
+        '5': 'ansi-blink',
+        '0': 'ansi-reset'
+    }
+    
+    pattern = r'\x1b\[([0-9;]*)m'
+    
+    def replace_ansi(match):
+        codes = match.group(1).split(';')
+        classes = []
+        for code in codes:
+            if code in ansi_colors:
+                classes.append(ansi_colors[code])
+        return f'<span class="{" ".join(classes)}">' if classes else '</span>'
+    
+    html = re.sub(pattern, replace_ansi, text)
+    html = html.replace('\x1b[m', '</span>')
+    html = html.replace('\x1b[K', '')
+    html = html.replace('>....', '')
+    html = re.sub(r'\x1b\[\?[0-9]+[hl]', '', html)
+    html = re.sub(r'\x1b\[[0-9]+[hl]', '', html)
+    html = re.sub(r'\x1b\[[0-9]+[A-Z]', '', html)
+    html = re.sub(r'\x1b\[[0-9]+[a-z]', '', html)
+    html = re.sub(r'</span>\s*<span[^>]*>', '', html)
+    html = re.sub(r'<span[^>]*>\s*</span>', '', html)
+    html = re.sub(r'<span[^>]*>\s*</span>', '', html)
+    html = re.sub(r'</span>\s*$', '', html)
+    html = re.sub(r'^\s*<span[^>]*>', '', html)
+    html = re.sub(r'</span>\s*<span[^>]*>', '', html)
+    html = re.sub(
+        r'(\[\d{2}:\d{2}:\d{2}\] \[[^\]]+\/INFO\] \[minecraft\/[^\]]+\]:[^\n]+)',
+        r'<span class="ansi-green">\1</span>',
+        html
+    )
+    
+    return html
 
 @app.route('/api/containers')
 def get_containers():
@@ -30,15 +89,27 @@ def get_containers():
                 label = container.labels['com.docker.compose.project']
             else:
                 label = 'Groupe non défini'
+
+            custom_labels = []
+            for i in range(10):
+                label_key = f'gamecontainermanager.customlabel{i}'
+                if container.labels.get(label_key):
+                    custom_labels.append(container.labels[label_key])
             
-            containers_data.append({
-                'name': container.name,
+            has_custom_labels = len(custom_labels) > 0
+
+            container_info = {
                 'id': container.id,
-                'status': container_status,
-                'is_running': container_status == 'running',
+                'name': container.name,
+                'status': container.status,
+                'is_running': container.status == 'running',
                 'started_at': started_at,
-                'group': label
-            })
+                'group': label,
+                'custom_labels': custom_labels,
+                'has_custom_labels': has_custom_labels
+            }
+            
+            containers_data.append(container_info)
         
         return jsonify(containers_data)
     except Exception as e:
@@ -180,9 +251,10 @@ def get_container_logs(container_id):
     try:
         container = client.containers.get(container_id)
         logs = container.logs(tail=100, timestamps=True).decode('utf-8')
+        html_logs = convert_ansi_to_html(logs)
         return jsonify({
             'status': 'success',
-            'logs': logs
+            'logs': html_logs
         })
     except docker.errors.NotFound:
         return jsonify({

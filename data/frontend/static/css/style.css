@@ -14,6 +14,7 @@ body {
     color: var(--text-primary);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
+    padding-bottom: 40px;
 }
 
 .container {
@@ -458,4 +459,155 @@ body {
 
 .logout-btn i {
     color: var(--danger-color);
+}
+
+@keyframes shake {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    10% { transform: translate(-5px, -2px) rotate(-2deg); }
+    20% { transform: translate(5px, 2px) rotate(2deg); }
+    30% { transform: translate(-4px, 1px) rotate(-1deg); }
+    40% { transform: translate(4px, -1px) rotate(1deg); }
+    50% { transform: translate(-3px, -2px) rotate(-2deg); }
+    60% { transform: translate(3px, 2px) rotate(2deg); }
+    70% { transform: translate(-2px, 1px) rotate(-1deg); }
+    80% { transform: translate(2px, -1px) rotate(1deg); }
+    90% { transform: translate(-1px, 0) rotate(0deg); }
+    100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+.shake {
+    animation: shake 0.4s ease-in-out;
+    display: inline-block;
+    color: #ff0000;
+    margin-left: 10px;
+    text-shadow: 0 0 5px rgba(255, 0, 0, 0.5);
+}
+
+/* Styles pour les logs avec codes ANSI */
+.log-ansi {
+    white-space: pre;
+    word-break: break-word;
+    font-family: 'Consolas', 'Monaco', monospace;
+    line-height: 1;
+    color: #FFFFFF;
+}
+
+.log-ansi .ansi-dim {
+    color: #888888 !important;
+}
+
+.log-ansi .ansi-green {
+    color: #4CAF50 !important;
+}
+
+.log-ansi .ansi-yellow {
+    color: #FFC107 !important;
+}
+
+.log-ansi .ansi-red {
+    color: #F44336 !important;
+}
+
+.log-ansi .ansi-blue {
+    color: #2196F3 !important;
+}
+
+.log-ansi .ansi-magenta {
+    color: #E91E63 !important;
+}
+
+.log-ansi .ansi-cyan {
+    color: #00BCD4 !important;
+}
+
+.log-ansi .ansi-white {
+    color: #FFFFFF !important;
+}
+
+.log-ansi .ansi-bright-green {
+    color: #8BC34A !important;
+}
+
+.log-ansi .ansi-bright-yellow {
+    color: #FFEB3B !important;
+}
+
+.log-ansi .ansi-bright-red {
+    color: #FF5252 !important;
+}
+
+.log-ansi .ansi-bright-blue {
+    color: #64B5F6 !important;
+}
+
+.log-ansi .ansi-bright-magenta {
+    color: #FF4081 !important;
+}
+
+.log-ansi .ansi-bright-cyan {
+    color: #4DD0E1 !important;
+}
+
+.log-ansi .ansi-bright-white {
+    color: #FFFFFF !important;
+}
+
+.log-ansi .ansi-bold {
+    font-weight: bold !important;
+}
+
+.log-ansi .ansi-italic {
+    font-style: italic !important;
+}
+
+.log-ansi .ansi-underline {
+    text-decoration: underline !important;
+}
+
+.log-ansi .ansi-blink {
+    animation: blink 1s infinite !important;
+}
+
+@keyframes blink {
+    50% { opacity: 0; }
+}
+
+.footer {
+    background-color: var(--bg-card);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 1000;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer .container {
+    max-width: 100%;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.footer a {
+    transition: color 0.2s ease;
+    line-height: 40px;
+    display: flex;
+    align-items: center;
+}
+
+.footer a:hover {
+    color: var(--accent-color) !important;
+}
+
+.footer i {
+    font-size: 1.2rem;
+    margin-right: 0.5rem;
 }

@@ -28,7 +28,7 @@ discord = oauth.register(
 )
 
 BACKEND_URL = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_URL')
-FRONT_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONT_URL')
+FRONTEND_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONTEND_URL')
 AUTHENTICATION = os.getenv('DOCKERCONTAINERMANAGER_AUTHENTICATION')
 FAVICON_URL = os.getenv('DOCKERCONTAINERMANAGER_FAVICON_URL')
 
@@ -51,7 +51,7 @@ def login():
 @app.route('/auth/discord')
 def discord_auth():
     if AUTHENTICATION == 'True':
-        redirect_uri = f"{FRONT_URL}/auth/discord/callback"
+        redirect_uri = f"{FRONTEND_URL}/auth/discord/callback"
         return discord.authorize_redirect(redirect_uri)
     else:
         return redirect(url_for('index'))

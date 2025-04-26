@@ -67,8 +67,17 @@
                                     <div class="container-card">
                                         <div class="container-header">
                                             <div class="d-flex justify-content-between align-items-center">
-                                                <h3>{{ container.name }}</h3>
-                                                <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
+                                                <div class="d-flex align-items-center">
+                                                    <h3 ondblclick="showAie(this)">{{ container.name }}</h3>
+                                                </div>
+                                                <div>
+                                                    {% if container.has_custom_labels %}
+                                                    <i class="bi bi-info-circle text-info me-2" style="cursor: pointer;" 
+                                                       onclick="showInfo('{{ container.name }}')"
+                                                       title="Informations"></i>
+                                                    {% endif %}
+                                                    <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
+                                                </div>
                                             </div>
                                         </div>
                                         <div class="container-info">
@@ -108,8 +117,17 @@
                         <div class="container-card">
                             <div class="container-header">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <h3>{{ container.name }}</h3>
-                                    <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
+                                    <div class="d-flex align-items-center">
+                                        <h3 ondblclick="showAie(this)">{{ container.name }}</h3>
+                                    </div>
+                                    <div>
+                                        {% if container.has_custom_labels %}
+                                        <i class="bi bi-info-circle text-info me-2" style="cursor: pointer;" 
+                                           onclick="showInfo('{{ container.name }}')"
+                                           title="Informations"></i>
+                                        {% endif %}
+                                        <i class="bi bi-journal-text text-info" style="cursor: pointer;" onclick="showLogs('{{ container.id }}', '{{ container.name }}')" title="Voir les logs"></i>
+                                    </div>
                                 </div>
                             </div>
                             <div class="container-info">
@@ -139,6 +157,8 @@
             {% endfor %}
         </div>
         {% endif %}
+    </div>
+
     <!-- Modal de confirmation -->
     <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" style="max-width: 600px;">
@@ -159,18 +179,47 @@
 
     <!-- Modal des logs -->
     <div class="modal fade" id="logsModal" tabindex="-1" aria-labelledby="logsModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered" style="width: 80%; max-width: none;">
             <div class="modal-content bg-dark text-light">
                 <div class="modal-header border-secondary d-flex justify-content-between align-items-center">
                     <h5 class="modal-title" id="logsModalLabel">Logs</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <pre id="logsContent" class="text-light bg-dark p-3 rounded" style="max-height: 70vh; overflow-y: auto; white-space: pre-wrap; word-break: break-word;"></pre>
+                    <pre id="logsContent" class="log-ansi text-light bg-dark p-3 rounded" style="max-height: 70vh; overflow-y: auto; word-break: break-word;"></pre>
                 </div>
             </div>
         </div>
     </div>
+
+    <!-- Modal des informations -->
+    <div class="modal fade" id="infoModal" tabindex="-1" aria-labelledby="infoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light">
+                <div class="modal-header border-secondary d-flex justify-content-between align-items-center">
+                    <h5 class="modal-title" id="infoModalLabel">Informations</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    {% for container in containers %}
+                    <div id="info-{{ container.name }}" style="display: none;">
+                        {% for label in container.custom_labels %}
+                        <p class="mb-2">{{ label }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3">
+        <div class="container text-center">
+            <a href="https://github.com/ColdfireL15/gameContainerManager" target="_blank" class="text-light text-decoration-none">
+                <i class="bi bi-github"></i> Game Container Manager
+            </a>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -182,6 +231,8 @@
         const logsModal = new bootstrap.Modal(document.getElementById('logsModal'));
         const logsContent = document.getElementById('logsContent');
         const logsModalLabel = document.getElementById('logsModalLabel');
+        const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+        const infoModalLabel = document.getElementById('infoModalLabel');
 
         function toggleLogoutMenu() {
             const menu = document.getElementById('logoutMenu');
@@ -410,7 +461,7 @@
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        logsContent.textContent = data.logs;
+                        logsContent.innerHTML = data.logs.replace(/\n/g, '<br>');
                     } else {
                         logsContent.textContent = `Erreur: ${data.message}`;
                     }
@@ -418,6 +469,31 @@
                 .catch(error => {
                     logsContent.textContent = `Erreur lors du chargement des logs: ${error}`;
                 });
+        }
+
+        function showInfo(containerName) {
+            infoModalLabel.textContent = `Informations - ${containerName}`;
+            // Cacher tous les contenus
+            document.querySelectorAll('[id^="info-"]').forEach(el => el.style.display = 'none');
+            // Afficher le contenu du conteneur
+            document.getElementById(`info-${containerName}`).style.display = 'block';
+            infoModal.show();
+        }
+
+        function showAie(element) {
+            const oldAie = element.parentElement.querySelector('.shake');
+            if (oldAie) {
+                oldAie.remove();
+            }
+
+            const aie = document.createElement('span');
+            aie.textContent = 'Aïe !';
+            aie.className = 'shake';
+            element.parentElement.appendChild(aie);
+
+            setTimeout(() => {
+                aie.remove();
+            }, 1000);
         }
     </script>
 </body>
