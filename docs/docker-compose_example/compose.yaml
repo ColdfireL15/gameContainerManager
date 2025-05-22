@@ -1,28 +1,30 @@
 services:
   frontend:
-    image: gamecontainermanager:latest
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
     environment:
+      DOCKERCONTAINERMANAGER_AUTHENTICATION: "True"
       DOCKERCONTAINERMANAGER_DEBUG: "False"
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: frontend
-    volumes:
-      - ./data/frontend:/app/frontend
+      DOCKERCONTAINERMANAGER_FAVICON_URL: ${DOCKERCONTAINERMANAGER_FAVICON_URL}
+      DOCKERCONTAINERMANAGER_SECRET_KEY: ${DOCKERCONTAINERMANAGER_SECRET_KEY}
+      DOCKERCONTAINERMANAGER_DISCORD_CLIENT_ID: ${DOCKERCONTAINERMANAGER_DISCORD_CLIENT_ID}
+      DOCKERCONTAINERMANAGER_DISCORD_CLIENT_SECRET: ${DOCKERCONTAINERMANAGER_DISCORD_CLIENT_SECRET}
+      DOCKERCONTAINERMANAGER_FRONTEND_URL: ${DOCKERCONTAINERMANAGER_FRONTEND_URL}
     ports:
       - "5000:5000"
 
   backend:
-    image: gamecontainermanager:latest
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: "False"
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: backend
     volumes:
-      - ./data/backend:/app/backend
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
   bot:
-    image: gamecontainermanager:latest
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
     environment:
-      DOCKERCONTAINERMANAGER_FRONT_URL: 'https://games-manager.example.com' # Public url of your frontend service
-      DOCKERCONTAINERMANAGER_DISCORD_TOKEN: "PUT YOUR DISCORD TOKEN HERE" # Need to be set // Can be put in docker secret to avoid exposing the token
+      TZ: Europe/Paris
+      DOCKERCONTAINERMANAGER_FRONTEND_URL: ${DOCKERCONTAINERMANAGER_FRONTEND_URL}
+      DOCKERCONTAINERMANAGER_DISCORD_TOKEN: ${DISCORD_TOKEN} # Need to be set // Can be put in docker secret to avoid exposing the token
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: bot
-    volumes:
-      - ./data/bot:/app/bot
