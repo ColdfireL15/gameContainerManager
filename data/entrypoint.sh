@@ -9,16 +9,16 @@ fi
 
 case "$DOCKERCONTAINERMANAGER_SERVICE_TYPE" in
     "frontend")
-        echo "Starting frontend service..."
-        python -u frontend/app.py
+        echo "Starting frontend service with Gunicorn..."
+        gunicorn --bind 0.0.0.0:5000 --access-logfile - --error-logfile - "frontend.app:app"
         ;;
     "backend")
-        echo "Starting backend service..."
-        python -u backend/main.py
+        echo "Starting backend service with Gunicorn and Uvicorn..."
+        gunicorn --bind 0.0.0.0:5000 --access-logfile - --error-logfile - "backend.main:app"
         ;;
     "bot")
-        echo "Starting bot service..."
-        python -u bot/bot.py
+        echo "Starting bot service with Gunicorn and Uvicorn..."
+        gunicorn --bind 0.0.0.0:5000 --worker-class uvicorn.workers.UvicornWorker --access-logfile - --error-logfile - "bot.bot:app"
         ;;
     *)
         echo "Error: Invalid DOCKERCONTAINERMANAGER_SERVICE_TYPE value"
