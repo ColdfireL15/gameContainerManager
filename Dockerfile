@@ -5,7 +5,7 @@ FROM python:3.12-alpine3.21
 WORKDIR /app
 
 # Copy project files
-COPY ./data .
+COPY /data .
 
 # Set environment(s) variable(s)
 ENV DOCKERCONTAINERMANAGER_AUTHENTICATION="False"
