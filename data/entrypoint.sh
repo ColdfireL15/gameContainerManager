@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # Check if DOCKERCONTAINERMANAGER_SERVICE_TYPE is set
 if [ -z "$DOCKERCONTAINERMANAGER_SERVICE_TYPE" ]; then
@@ -25,4 +25,4 @@ case "$DOCKERCONTAINERMANAGER_SERVICE_TYPE" in
         echo "Please set DOCKERCONTAINERMANAGER_SERVICE_TYPE to either 'frontend', 'backend', or 'bot'"
         exit 1
         ;;
-esac 
+esac
