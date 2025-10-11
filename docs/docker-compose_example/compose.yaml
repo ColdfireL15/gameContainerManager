@@ -1,6 +1,7 @@
 services:
   frontend:
-    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
+    restart: unless-stopped
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG_FRONT:-main}
     environment:
       DOCKERCONTAINERMANAGER_AUTHENTICATION: "True"
       DOCKERCONTAINERMANAGER_DEBUG: "False"
@@ -14,15 +15,19 @@ services:
       - "5000:5000"
 
   backend:
-    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
+    restart: unless-stopped
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG_BACK:-main}
     environment:
       DOCKERCONTAINERMANAGER_DEBUG: "False"
       DOCKERCONTAINERMANAGER_SERVICE_TYPE: backend
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
+    healthcheck: 
+      disable: true
 
   bot:
-    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG:-latest}
+    restart: unless-stopped
+    image: ghcr.io/coldfirel15/gamecontainermanager:${DOCKER_TAG_BOT:-main}
     environment:
       TZ: Europe/Paris
       DOCKERCONTAINERMANAGER_FRONTEND_URL: ${DOCKERCONTAINERMANAGER_FRONTEND_URL}
