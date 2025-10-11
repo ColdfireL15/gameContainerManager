@@ -18,7 +18,7 @@ case "$DOCKERCONTAINERMANAGER_SERVICE_TYPE" in
         ;;
     "bot")
         echo "Starting bot service with Gunicorn and Uvicorn..."
-        gunicorn --bind 0.0.0.0:5000 --worker-class uvicorn.workers.UvicornWorker --access-logfile - --error-logfile - "bot.bot:app"
+        python -u bot/bot.py
         ;;
     *)
         echo "Error: Invalid DOCKERCONTAINERMANAGER_SERVICE_TYPE value"
