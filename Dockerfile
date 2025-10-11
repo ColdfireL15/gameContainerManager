@@ -13,6 +13,8 @@ ENV DOCKERCONTAINERMANAGER_DEBUG="False"
 ENV DOCKERCONTAINERMANAGER_BACKEND_URL="http://backend:5000"
 ENV DOCKERCONTAINERMANAGER_FAVICON_URL='./static/icon/gameContainerManager.ico'
 ENV DOCKERCONTAINERMANAGER_SERVICE_TYPE=frontend
+ENV GUNICORN_TIMEOUT=120
+ENV GUNICORN_WORKERS=1
 
 # Install python dependencies
 RUN pip install -r requirements.txt
@@ -24,8 +26,8 @@ RUN chmod +x entrypoint.sh
 EXPOSE 5000
 
 # HEALTHCHECK
-RUN apk add --no-cache curl
-HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+RUN apk add --no-cache curl nano
+HEALTHCHECK --interval=60s --timeout=5s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:5000/ || exit 1
 
 # Set the script as entry point
