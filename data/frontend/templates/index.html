@@ -39,7 +39,7 @@
                 <button class="btn btn-wol" id="wolButton" onclick="sendWol()">
                     <i class="bi bi-lightning-charge-fill me-2"></i>Allumer le serveur
                 </button>
-                <div id="wolStatus" class="wol-status" style="display: none;"></div>
+                <div id="wolStatus" class="wol-status" style="display: none;" data-timer="{{ wol_timer }}"></div>
             </div>
             {% else %}
             <div class="alert alert-danger">
@@ -497,38 +497,28 @@
         function sendWol() {
             const wolButton = document.getElementById('wolButton');
             const wolStatus = document.getElementById('wolStatus');
-            
-            wolButton.disabled = true;
-            wolButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Envoi en cours...';
-            wolStatus.style.display = 'none';
+            const wolTimer = parseInt(wolStatus.dataset.timer);
+
+            wolButton.style.display = 'none';
+            wolStatus.style.display = 'block';
+            wolStatus.className = 'wol-status wol-status-success';
 
             fetch('/api/wol', { method: 'POST' })
                 .then(response => response.json())
                 .then(data => {
-                    wolStatus.style.display = 'block';
                     if (data.status === 'success') {
-                        wolStatus.className = 'wol-status wol-status-success';
-                        wolStatus.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Magic packet envoyé ! Le serveur devrait démarrer sous peu.';
-                        wolButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Rafraîchir la page';
-                        wolButton.disabled = false;
-                        wolButton.onclick = function() { location.reload(); };
-
-                        setTimeout(() => { location.reload(); }, 60000);
+                        wolStatus.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Démarrage en cours...';
+                        setTimeout(() => { location.reload(); }, wolTimer * 1000);
                     } else {
                         wolStatus.className = 'wol-status wol-status-error';
                         wolStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Erreur : ' + data.message;
-                        wolButton.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i>Réessayer';
-                        wolButton.disabled = false;
-                        wolButton.onclick = sendWol;
+                        wolButton.style.display = '';
                     }
                 })
                 .catch(error => {
-                    wolStatus.style.display = 'block';
                     wolStatus.className = 'wol-status wol-status-error';
                     wolStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Erreur : ' + error;
-                    wolButton.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i>Réessayer';
-                    wolButton.disabled = false;
-                    wolButton.onclick = sendWol;
+                    wolButton.style.display = '';
                 });
         }
 

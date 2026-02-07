@@ -15,6 +15,7 @@ ENV DOCKERCONTAINERMANAGER_FAVICON_URL='./static/icon/gameContainerManager.ico'
 ENV DOCKERCONTAINERMANAGER_SERVICE_TYPE=frontend
 ENV GUNICORN_TIMEOUT=120
 ENV GUNICORN_WORKERS=1
+ENV WOL_BOOT_UP_TIMER=30
 
 # Install python dependencies
 RUN pip install -r requirements.txt

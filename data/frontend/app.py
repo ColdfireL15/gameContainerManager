@@ -33,6 +33,7 @@ FRONTEND_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONTEND_URL')
 AUTHENTICATION = os.getenv('DOCKERCONTAINERMANAGER_AUTHENTICATION')
 FAVICON_URL = os.getenv('DOCKERCONTAINERMANAGER_FAVICON_URL')
 BACKEND_MAC_ADDR = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_MAC_ADDR')
+WOL_BOOT_UP_TIMER = int(os.getenv('WOL_BOOT_UP_TIMER', 30))
 
 def login_required(f):
     def decorated_function(*args, **kwargs):
@@ -89,10 +90,10 @@ def index():
     try:
         response = requests.get(f"{BACKEND_URL}/api/containers", timeout=5)
         containers = response.json()
-        return render_template('index.html', containers=containers, favicon_url=FAVICON_URL, wol_available=wol_available)
+        return render_template('index.html', containers=containers, favicon_url=FAVICON_URL, wol_available=wol_available, wol_timer=WOL_BOOT_UP_TIMER)
     except Exception as e:
         print(f"Erreur lors de la récupération des conteneurs: {str(e)}")
-        return render_template('index.html', error=str(e), favicon_url=FAVICON_URL, wol_available=wol_available)
+        return render_template('index.html', error=str(e), favicon_url=FAVICON_URL, wol_available=wol_available, wol_timer=WOL_BOOT_UP_TIMER)
 
 @app.route('/api/wol', methods=['POST'])
 def wake_on_lan():
