@@ -84,7 +84,13 @@ class WolView(View):
 
     @discord.ui.button(label="Démarrer le serveur via WOL", style=discord.ButtonStyle.green)
     async def wol_button(self, interaction: discord.Interaction, button: Button):
-        await interaction.response.defer()
+        loading_embed = discord.Embed(
+            title="Démarrage du serveur",
+            description="Envoi du magic packet...",
+            color=discord.Color.green()
+        )
+        await interaction.response.edit_message(embed=loading_embed, view=None)
+        msg = interaction.message
 
         try:
             response = await asyncio.to_thread(requests.post, f"{LOGS_URL}/api/wol", timeout=5)
@@ -96,7 +102,7 @@ class WolView(View):
                 description=f"Impossible d'envoyer le magic packet : {str(e)}",
                 color=discord.Color.red()
             )
-            await interaction.edit_original_response(embed=embed, view=None)
+            await msg.edit(embed=embed)
             return
 
         if data.get('status') != 'success':
@@ -105,40 +111,33 @@ class WolView(View):
                 description=data.get('message', 'Erreur inconnue'),
                 color=discord.Color.red()
             )
-            await interaction.edit_original_response(embed=embed, view=None)
+            await msg.edit(embed=embed)
             return
 
         total = 30
-        embed = discord.Embed(
-            title="Démarrage du serveur",
-            description=f"Magic packet envoyé par {interaction.user.mention}",
-            color=0x00ff00
-        )
-        embed.add_field(name="Progression", value=create_progress_bar(0, total), inline=False)
-        embed.add_field(name="Temps restant", value=f"{total}s", inline=True)
-        await interaction.edit_original_response(embed=embed, view=None)
-
-        for elapsed in range(10, total + 1, 10):
-            await asyncio.sleep(10)
+        for elapsed in range(0, total + 1, 10):
             remaining = total - elapsed
 
             if remaining <= 10:
-                color = 0xff8800
+                couleur = discord.Color.orange()
             else:
-                color = 0x00ff00
+                couleur = discord.Color.green()
 
             embed = discord.Embed(
                 title="Démarrage du serveur",
                 description=f"Magic packet envoyé par {interaction.user.mention}",
-                color=color
+                color=couleur
             )
             embed.add_field(name="Progression", value=create_progress_bar(elapsed, total), inline=False)
             embed.add_field(name="Temps restant", value=f"{remaining}s" if remaining > 0 else "Vérification...", inline=True)
 
             try:
-                await interaction.edit_original_response(embed=embed, view=None)
+                await msg.edit(embed=embed)
             except discord.NotFound:
                 return
+
+            if elapsed < total:
+                await asyncio.sleep(10)
 
         data = load_data()
         if data is not None:
@@ -171,7 +170,7 @@ class WolView(View):
                 embed.description = "Aucun conteneur trouvé"
             view = ContainerListView(data) if data else None
             try:
-                await interaction.edit_original_response(embed=embed, view=view)
+                await msg.edit(embed=embed, view=view)
             except discord.NotFound:
                 pass
         else:
@@ -182,7 +181,7 @@ class WolView(View):
             )
             view = WolView()
             try:
-                await interaction.edit_original_response(embed=embed, view=view)
+                await msg.edit(embed=embed, view=view)
             except discord.NotFound:
                 pass
 
