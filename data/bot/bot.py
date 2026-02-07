@@ -1,5 +1,6 @@
 import os
 import json
+import asyncio
 import discord
 import requests
 from discord.ext import commands
@@ -25,12 +26,12 @@ global_cooldowns = {}
 
 def load_data():
     try:
-        response = requests.get(f"{BACKEND_URL}/api/containers")
+        response = requests.get(f"{BACKEND_URL}/api/containers", timeout=5)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         print(f"Erreur lors de la récupération des données: {str(e)}")
-        return []
+        return None
 
 def pad_right(text, length):
             return f"{text:<{length}}"
@@ -70,6 +71,118 @@ def format_uptime(started_at, status):
         
     except Exception as e:
         return "N/A"
+
+def create_progress_bar(current, total, length=10):
+    filled = int((current / total) * length) if total > 0 else 0
+    bar = "█" * filled + "░" * (length - filled)
+    percentage = int((current / total) * 100) if total > 0 else 0
+    return f"{bar} {percentage}%"
+
+class WolView(View):
+    def __init__(self):
+        super().__init__(timeout=300)
+
+    @discord.ui.button(label="Démarrer le serveur via WOL", style=discord.ButtonStyle.green)
+    async def wol_button(self, interaction: discord.Interaction, button: Button):
+        try:
+            response = requests.post(f"{LOGS_URL}/api/wol", timeout=5)
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            embed = discord.Embed(
+                title="Erreur WOL",
+                description=f"Impossible d'envoyer le magic packet : {str(e)}",
+                color=discord.Color.red()
+            )
+            await interaction.response.edit_message(embed=embed, view=None)
+            return
+
+        if data.get('status') != 'success':
+            embed = discord.Embed(
+                title="Erreur WOL",
+                description=data.get('message', 'Erreur inconnue'),
+                color=discord.Color.red()
+            )
+            await interaction.response.edit_message(embed=embed, view=None)
+            return
+
+        total = 30
+        embed = discord.Embed(
+            title="Démarrage du serveur",
+            description=f"Magic packet envoyé par {interaction.user.mention}",
+            color=0x00ff00
+        )
+        embed.add_field(name="Progression", value=create_progress_bar(0, total), inline=False)
+        embed.add_field(name="Temps restant", value=f"{total}s", inline=True)
+        await interaction.response.edit_message(embed=embed, view=None)
+
+        for elapsed in range(10, total + 1, 10):
+            await asyncio.sleep(10)
+            remaining = total - elapsed
+
+            if remaining <= 10:
+                color = 0xff8800
+            else:
+                color = 0x00ff00
+
+            embed = discord.Embed(
+                title="Démarrage du serveur",
+                description=f"Magic packet envoyé par {interaction.user.mention}",
+                color=color
+            )
+            embed.add_field(name="Progression", value=create_progress_bar(elapsed, total), inline=False)
+            embed.add_field(name="Temps restant", value=f"{remaining}s" if remaining > 0 else "Vérification...", inline=True)
+
+            try:
+                await interaction.edit_original_response(embed=embed, view=None)
+            except discord.NotFound:
+                return
+
+        data = load_data()
+        if data is not None:
+            embed = discord.Embed(
+                title="État des conteneurs",
+                color=discord.Color.blurple()
+            )
+            for container in data:
+                width = 41
+                label_width = 12
+                content_width = width - label_width - 3
+                status_symbol = "🟩" if container['status'] == 'running' else "🟥"
+                top_line    = "┌" + "─" * (width - 2) + "┐"
+                name_line   = f" {status_symbol} {pad_right(container['name'], width - 8)}{status_symbol}"
+                middle_line = f"├{'─' * (label_width)}┬{'─' * (content_width)}┤"
+                middle_line_in = f"├{'─' * (label_width)}┼{'─' * (content_width)}┤"
+                status_line = f"│ {pad_right('Status', label_width - 1)}│ {pad_right(container['status'], content_width - 1)}│"
+                uptime_line = f"│ {pad_right('Uptime', label_width - 1)}│ {pad_right(format_uptime(container['started_at'], container['status']), content_width - 1)}│"
+                bottom_line = f"└{'─' * (label_width)}┴{'─' * (content_width)}┘"
+                container_info = f"""```
+{top_line}
+{name_line}
+{middle_line}
+{status_line}
+{middle_line_in}
+{uptime_line}
+{bottom_line}```"""
+                embed.add_field(name="\u200b", value=container_info, inline=False)
+            if not data:
+                embed.description = "Aucun conteneur trouvé"
+            view = ContainerListView(data) if data else None
+            try:
+                await interaction.edit_original_response(embed=embed, view=view)
+            except discord.NotFound:
+                pass
+        else:
+            embed = discord.Embed(
+                title="Serveur hors ligne",
+                description="Le serveur n'a pas répondu après 30 secondes.",
+                color=discord.Color.red()
+            )
+            view = WolView()
+            try:
+                await interaction.edit_original_response(embed=embed, view=view)
+            except discord.NotFound:
+                pass
 
 class ContainerActions(View):
     def __init__(self, container_name, container_status):
@@ -321,6 +434,17 @@ async def status(interaction: discord.Interaction):
             return
 
     data = load_data()
+
+    if data is None:
+        embed = discord.Embed(
+            title="Serveur hors ligne",
+            description="Le serveur est injoignable.",
+            color=discord.Color.red()
+        )
+        view = WolView()
+        await interaction.response.send_message(embed=embed, view=view, ephemeral=True)
+        return
+
     embed = discord.Embed(
         title="État des conteneurs",
         color=discord.Color.blurple()
@@ -410,5 +534,3 @@ try:
     
 except Exception as e:
     print(f"Erreur lors du démarrage du bot: {str(e)}")
-
-bot.run(TOKEN) 
