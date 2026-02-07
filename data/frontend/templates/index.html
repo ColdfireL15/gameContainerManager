@@ -29,9 +29,23 @@
         <h1 class="text-center mb-4">Game Container Manager</h1>
         
         {% if error %}
-        <div class="alert alert-danger">
-            {{ error }}
-        </div>
+            {% if wol_available %}
+            <div class="wol-card">
+                <div class="wol-icon">
+                    <i class="bi bi-power"></i>
+                </div>
+                <h2 class="wol-title">Serveur hors ligne</h2>
+                <p class="wol-description">Réveiller le serveur via Wake-on-LAN.</p>
+                <button class="btn btn-wol" id="wolButton" onclick="sendWol()">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Allumer le serveur
+                </button>
+                <div id="wolStatus" class="wol-status" style="display: none;"></div>
+            </div>
+            {% else %}
+            <div class="alert alert-danger">
+                {{ error }}
+            </div>
+            {% endif %}
         {% else %}
         {% set groups = [] %}
         {% for group_name, group_containers in containers|groupby('group') %}
@@ -478,6 +492,44 @@
             // Afficher le contenu du conteneur
             document.getElementById(`info-${containerName}`).style.display = 'block';
             infoModal.show();
+        }
+
+        function sendWol() {
+            const wolButton = document.getElementById('wolButton');
+            const wolStatus = document.getElementById('wolStatus');
+            
+            wolButton.disabled = true;
+            wolButton.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Envoi en cours...';
+            wolStatus.style.display = 'none';
+
+            fetch('/api/wol', { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    wolStatus.style.display = 'block';
+                    if (data.status === 'success') {
+                        wolStatus.className = 'wol-status wol-status-success';
+                        wolStatus.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Magic packet envoyé ! Le serveur devrait démarrer sous peu.';
+                        wolButton.innerHTML = '<i class="bi bi-arrow-clockwise me-2"></i>Rafraîchir la page';
+                        wolButton.disabled = false;
+                        wolButton.onclick = function() { location.reload(); };
+
+                        setTimeout(() => { location.reload(); }, 60000);
+                    } else {
+                        wolStatus.className = 'wol-status wol-status-error';
+                        wolStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Erreur : ' + data.message;
+                        wolButton.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i>Réessayer';
+                        wolButton.disabled = false;
+                        wolButton.onclick = sendWol;
+                    }
+                })
+                .catch(error => {
+                    wolStatus.style.display = 'block';
+                    wolStatus.className = 'wol-status wol-status-error';
+                    wolStatus.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-2"></i>Erreur : ' + error;
+                    wolButton.innerHTML = '<i class="bi bi-lightning-charge-fill me-2"></i>Réessayer';
+                    wolButton.disabled = false;
+                    wolButton.onclick = sendWol;
+                });
         }
 
         function showAie(element) {

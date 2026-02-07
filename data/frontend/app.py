@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 from authlib.integrations.flask_client import OAuth
 from datetime import datetime, timedelta
+from wakeonlan import send_magic_packet
 
 load_dotenv()
 DEBUG = os.getenv('DOCKERCONTAINERMANAGER_DEBUG')
@@ -31,6 +32,7 @@ BACKEND_URL = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_URL')
 FRONTEND_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONTEND_URL')
 AUTHENTICATION = os.getenv('DOCKERCONTAINERMANAGER_AUTHENTICATION')
 FAVICON_URL = os.getenv('DOCKERCONTAINERMANAGER_FAVICON_URL')
+BACKEND_MAC_ADDR = os.getenv('DOCKERCONTAINERMANAGER_BACKEND_MAC_ADDR')
 
 def login_required(f):
     def decorated_function(*args, **kwargs):
@@ -83,13 +85,28 @@ def logout():
 def index():
     if AUTHENTICATION == 'True' and 'user' not in session:
         return redirect(url_for('login'))
+    wol_available = bool(BACKEND_MAC_ADDR)
     try:
-        response = requests.get(f"{BACKEND_URL}/api/containers")
+        response = requests.get(f"{BACKEND_URL}/api/containers", timeout=5)
         containers = response.json()
-        return render_template('index.html', containers=containers, favicon_url=FAVICON_URL)
+        return render_template('index.html', containers=containers, favicon_url=FAVICON_URL, wol_available=wol_available)
     except Exception as e:
         print(f"Erreur lors de la récupération des conteneurs: {str(e)}")
-        return render_template('index.html', error=str(e), favicon_url=FAVICON_URL)
+        return render_template('index.html', error=str(e), favicon_url=FAVICON_URL, wol_available=wol_available)
+
+@app.route('/api/wol', methods=['POST'])
+def wake_on_lan():
+    if AUTHENTICATION == 'True' and 'user' not in session:
+        return redirect(url_for('login'))
+    if not BACKEND_MAC_ADDR:
+        return {'status': 'error', 'message': 'Adresse MAC non configurée'}, 400
+    try:
+        send_magic_packet(BACKEND_MAC_ADDR)
+        print(f"Magic packet WOL envoyé à {BACKEND_MAC_ADDR}")
+        return {'status': 'success', 'message': f'Magic packet envoyé à {BACKEND_MAC_ADDR}'}
+    except Exception as e:
+        print(f"Erreur lors de l'envoi du WOL: {str(e)}")
+        return {'status': 'error', 'message': str(e)}, 500
 
 @app.route('/api/container/<container_id>/stop', methods=['POST'])
 def stop_container(container_id):
