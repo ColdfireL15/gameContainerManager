@@ -84,8 +84,10 @@ class WolView(View):
 
     @discord.ui.button(label="Démarrer le serveur via WOL", style=discord.ButtonStyle.green)
     async def wol_button(self, interaction: discord.Interaction, button: Button):
+        await interaction.response.defer()
+
         try:
-            response = requests.post(f"{LOGS_URL}/api/wol", timeout=5)
+            response = await asyncio.to_thread(requests.post, f"{LOGS_URL}/api/wol", timeout=5)
             response.raise_for_status()
             data = response.json()
         except Exception as e:
@@ -94,7 +96,7 @@ class WolView(View):
                 description=f"Impossible d'envoyer le magic packet : {str(e)}",
                 color=discord.Color.red()
             )
-            await interaction.response.edit_message(embed=embed, view=None)
+            await interaction.edit_original_response(embed=embed, view=None)
             return
 
         if data.get('status') != 'success':
@@ -103,7 +105,7 @@ class WolView(View):
                 description=data.get('message', 'Erreur inconnue'),
                 color=discord.Color.red()
             )
-            await interaction.response.edit_message(embed=embed, view=None)
+            await interaction.edit_original_response(embed=embed, view=None)
             return
 
         total = 30
@@ -114,7 +116,7 @@ class WolView(View):
         )
         embed.add_field(name="Progression", value=create_progress_bar(0, total), inline=False)
         embed.add_field(name="Temps restant", value=f"{total}s", inline=True)
-        await interaction.response.edit_message(embed=embed, view=None)
+        await interaction.edit_original_response(embed=embed, view=None)
 
         for elapsed in range(10, total + 1, 10):
             await asyncio.sleep(10)
