@@ -97,8 +97,6 @@ def index():
 
 @app.route('/api/wol', methods=['POST'])
 def wake_on_lan():
-    if AUTHENTICATION == 'True' and 'user' not in session:
-        return redirect(url_for('login'))
     if not BACKEND_MAC_ADDR:
         return {'status': 'error', 'message': 'Adresse MAC non configurée'}, 400
     try:

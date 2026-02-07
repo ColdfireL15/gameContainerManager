@@ -90,7 +90,6 @@ class WolView(View):
             color=discord.Color.green()
         )
         await interaction.response.edit_message(embed=loading_embed, view=None)
-        msg = interaction.message
 
         try:
             response = await asyncio.to_thread(requests.post, f"{LOGS_URL}/api/wol", timeout=5)
@@ -102,7 +101,7 @@ class WolView(View):
                 description=f"Impossible d'envoyer le magic packet : {str(e)}",
                 color=discord.Color.red()
             )
-            await msg.edit(embed=embed)
+            await interaction.edit_original_response(embed=embed)
             return
 
         if data.get('status') != 'success':
@@ -111,7 +110,7 @@ class WolView(View):
                 description=data.get('message', 'Erreur inconnue'),
                 color=discord.Color.red()
             )
-            await msg.edit(embed=embed)
+            await interaction.edit_original_response(embed=embed)
             return
 
         total = 30
@@ -132,7 +131,7 @@ class WolView(View):
             embed.add_field(name="Temps restant", value=f"{remaining}s" if remaining > 0 else "Vérification...", inline=True)
 
             try:
-                await msg.edit(embed=embed)
+                await interaction.edit_original_response(embed=embed)
             except discord.NotFound:
                 return
 
@@ -170,7 +169,7 @@ class WolView(View):
                 embed.description = "Aucun conteneur trouvé"
             view = ContainerListView(data) if data else None
             try:
-                await msg.edit(embed=embed, view=view)
+                await interaction.edit_original_response(embed=embed, view=view)
             except discord.NotFound:
                 pass
         else:
@@ -181,7 +180,7 @@ class WolView(View):
             )
             view = WolView()
             try:
-                await msg.edit(embed=embed, view=view)
+                await interaction.edit_original_response(embed=embed, view=view)
             except discord.NotFound:
                 pass
 
