@@ -21,6 +21,7 @@ intents.message_content = True
 intents.members = True
 bot = commands.Bot(command_prefix='!', intents=intents)
 LOGS_URL = os.getenv('DOCKERCONTAINERMANAGER_FRONTEND_URL')
+WOL_BOOT_UP_TIMER = int(os.getenv('WOL_BOOT_UP_TIMER', 35))
 
 global_cooldowns = {}
 
@@ -113,11 +114,12 @@ class WolView(View):
             await interaction.edit_original_response(embed=embed)
             return
 
-        total = 30
-        for elapsed in range(0, total + 1, 10):
+        total = WOL_BOOT_UP_TIMER
+        step = max(total // 3, 1)
+        for elapsed in range(0, total + 1, step):
             remaining = total - elapsed
 
-            if remaining <= 10:
+            if remaining <= step:
                 couleur = discord.Color.orange()
             else:
                 couleur = discord.Color.green()
@@ -136,7 +138,7 @@ class WolView(View):
                 return
 
             if elapsed < total:
-                await asyncio.sleep(10)
+                await asyncio.sleep(step)
 
         data = load_data()
         if data is not None:
